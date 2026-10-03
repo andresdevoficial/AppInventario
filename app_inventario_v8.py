@@ -37,12 +37,18 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 
 # Configuración de Conexión MySQL
+
+# Configuración dinámica para Aiven / Render
+
+
+# Configuración dinámica leyendo únicamente las variables de entorno de Render
 MYSQL_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "",  # Configura tu contraseña aquí
-    "database": "inventario_v4",
-    "port": 3306
+    "host": os.environ.get("DB_HOST"),
+    "user": os.environ.get("DB_USER", "avnadmin"),
+    "password": os.environ.get("DB_PASSWORD"),
+    "database": os.environ.get("DB_NAME", "defaultdb"),
+    "port": int(os.environ.get("DB_PORT", 28693)),
+    "ssl_disabled": False  # Requerido por Aiven
 }
 
 PORT = 8000
