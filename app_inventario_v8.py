@@ -44,7 +44,7 @@ except ImportError:
 import os
 
 MYSQL_CONFIG = {
-    "host": os.environ.get("DB_HOST"),
+    "host": os.environ.get("DB_HOST", "mysql-1f966260-andres1509.b.aivencloud.com"),
     "user": os.environ.get("DB_USER", "avnadmin"),
     "password": os.environ.get("DB_PASSWORD"),
     "database": os.environ.get("DB_NAME", "defaultdb"),
@@ -63,17 +63,15 @@ db_pool = None
 def init_db_pool():
     global db_pool
     try:
-        # Inicializa directamente el pool conectándose a la BD existente en Aiven
         db_pool = pooling.MySQLConnectionPool(
             pool_name="inventario_pool_v8",
-            pool_size=10,
+            pool_size=5,
             pool_reset_session=True,
             **MYSQL_CONFIG
         )
-        print("Pool de conexiones a la base de datos creado exitosamente.")
+        print("Pool de conexiones conectado exitosamente a Aiven MySQL.")
     except Exception as e:
         print(f"Error creando el pool de conexiones MySQL: {e}")
-        # No usamos sys.exit(1) para evitar tumbar la aplicación
 
 @contextmanager
 def get_db_context():
