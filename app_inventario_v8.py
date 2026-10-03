@@ -1817,6 +1817,53 @@ def abrir_navegador():
     time.sleep(1.2)
     webbrowser.open(f"http://localhost:{PORT}")
 
+    # Adaptador WSGI para Gunicorn / Render
+def application(environ, start_response):
+    # Inicializa las tablas en Aiven si aún no existen
+    try:
+        init_db_pool()
+        init_db()
+    except Exception:
+        pass
+
+    # Maneja la petición
+    import io
+    from wsgiref.handlers import SimpleHandler
+
+    class DummyServer:
+        def __init__(self, environ):
+            self.base_environ = environ
+
+    stdout = io.BytesIO()
+    stderr = io.BytesIO()
+
+    handler = SimpleHandler(
+        environ['wsgi.input'],
+        stdout,
+        stderr,
+        environ
+    )
+    handler.run(AppRequestHandler)
+
+    # Extrae el código de respuesta HTTP y encabezados
+    output = stdout.getvalue()
+    parts = output.split(b'\r\n\r\n', 1)
+    header_bytes = parts[0]
+    body = parts[1] if len(parts) > 1 else b''
+
+    lines = header_bytes.split(b'\r\n')
+    status_line = lines[0].decode('iso-8859-1')
+    status = status_line.split(' ', 1)[1] if ' ' in status_line else '200 OK'
+
+    headers = []
+    for line in lines[1:]:
+        if b':' in line:
+            k, v = line.split(b':', 1)
+            headers.append((k.decode('iso-8859-1').strip(), v.decode('iso-8859-1').strip()))
+
+    start_response(status, headers)
+    return [body]
+
 if __name__ == '__main__':
     print("Iniciando Sistema de Inventarios v8.0 (MySQL + CRUD Productos)...")
     init_db_pool()
