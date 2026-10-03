@@ -55,26 +55,17 @@ db_pool = None
 def init_db_pool():
     global db_pool
     try:
-        conn = mysql.connector.connect(
-            host=MYSQL_CONFIG["host"],
-            user=MYSQL_CONFIG["user"],
-            password=MYSQL_CONFIG["password"],
-            port=MYSQL_CONFIG["port"]
+        # Inicializa directamente el pool conectándose a la BD existente en Aiven
+        db_pool = pooling.MySQLConnectionPool(
+            pool_name="inventario_pool_v8",
+            pool_size=10,
+            pool_reset_session=True,
+            **MYSQL_CONFIG
         )
-        cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{MYSQL_CONFIG['database']}` DEFAULT CHARACTER SET utf8mb4;")
-        cursor.close()
-        conn.close()
+        print("Pool de conexiones a la base de datos creado exitosamente.")
     except Exception as e:
-        print(f"Error comprobando o creando la base de datos MySQL: {e}")
-        sys.exit(1)
-
-    db_pool = pooling.MySQLConnectionPool(
-        pool_name="inventario_pool_v8",
-        pool_size=10,
-        pool_reset_session=True,
-        **MYSQL_CONFIG
-    )
+        print(f"Error creando el pool de conexiones MySQL: {e}")
+        # No usamos sys.exit(1) para evitar tumbar la aplicación
 
 @contextmanager
 def get_db_context():
