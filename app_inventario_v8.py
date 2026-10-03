@@ -19,6 +19,7 @@ import io
 import html
 import urllib.parse
 import webbrowser
+import pymysql
 import threading
 import time
 from contextlib import contextmanager
@@ -43,32 +44,35 @@ except ImportError:
 
 import os
 
-MYSQL_CONFIG = {
-    "host": os.environ.get("DB_HOST", "mysql-1f966260-andres1509.b.aivencloud.com"),
-    "user": os.environ.get("DB_USER", "avnadmin"),
-    "password": os.environ.get("DB_PASSWORD"),
-    "database": os.environ.get("DB_NAME", "defaultdb"),
-    "port": int(os.environ.get("DB_PORT", 28693)),
-    "ssl_ca": None,
-    "ssl_verify_cert": False
-}
+# Obtener variables de entorno para la base de datos
+DB_HOST = os.environ.get("DB_HOST", "mysql-1f966260-andres1509.b.aivencloud.com")
+DB_USER = os.environ.get("DB_USER", "avnadmin")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_NAME = os.environ.get("DB_NAME", "defaultdb")
+DB_PORT = int(os.environ.get("DB_PORT", 28693))
 
 PORT = 8000
 db_pool = None
 
-# =============================================================================
+# ==============================================================================
 # 1. GESTIÓN DE CONEXIONES Y BASE DE DATOS
-# =============================================================================
+# ==============================================================================
+
+def get_db_connection():
+    return pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=DB_PORT,
+        ssl={'ssl': True},
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
 def init_db_pool():
-    global db_pool
     try:
-        db_pool = pooling.MySQLConnectionPool(
-            pool_name="inventario_pool_v8",
-            pool_size=5,
-            pool_reset_session=True,
-            **MYSQL_CONFIG
-        )
+        conn = get_db_connection()
+        conn.close()
         print("Pool de conexiones conectado exitosamente a Aiven MySQL.")
     except Exception as e:
         print(f"Error creando el pool de conexiones MySQL: {e}")
