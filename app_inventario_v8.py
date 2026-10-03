@@ -41,14 +41,16 @@ except ImportError:
 # Configuración dinámica para Aiven / Render
 
 
-# Configuración dinámica leyendo únicamente las variables de entorno de Render
+import os
+
 MYSQL_CONFIG = {
     "host": os.environ.get("DB_HOST"),
     "user": os.environ.get("DB_USER", "avnadmin"),
     "password": os.environ.get("DB_PASSWORD"),
     "database": os.environ.get("DB_NAME", "defaultdb"),
     "port": int(os.environ.get("DB_PORT", 28693)),
-    "ssl_disabled": False  # Requerido por Aiven
+    "ssl_ca": None,
+    "ssl_verify_cert": False
 }
 
 PORT = 8000
